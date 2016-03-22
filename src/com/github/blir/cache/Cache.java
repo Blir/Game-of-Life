@@ -1,5 +1,8 @@
-package com.github.blir;
+package com.github.blir.cache;
 
+import com.github.blir.Life;
+import com.github.blir.gui.LifeDebug;
+import com.github.blir.Location;
 import java.util.*;
 
 /**

@@ -1,5 +1,9 @@
-package com.github.blir;
+package com.github.blir.gui;
 
+import com.github.blir.Life;
+import com.github.blir.LifeSource;
+import com.github.blir.Location;
+import com.github.blir.cache.Chunk;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.HashSet;
@@ -59,13 +63,33 @@ public class LifeDebug implements LifeSource, WindowListener {
     }
 
     @Override
-    public Object getRuntimeMutex() {
+    public Object getRenderRuntimeMutex() {
         return new Object();
+    }
+    
+    @Override
+    public Object getPrepareRenderRuntimeMutex() {
+        return new Object();
+    }
+    
+    @Override
+    public LifeListener getListener() {
+        return Life.life.listener;
+    }
+    
+    @Override
+    public LifeFrame getFrame() {
+        return frame;
     }
 
     @Override
     public boolean worldContains(int x, int y) {
         return world.contains(new Location(x, y));
+    }
+    
+    @Override
+    public Set<Location> getWorld() {
+        return world;
     }
 
     @Override

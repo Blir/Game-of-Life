@@ -1,5 +1,6 @@
-package com.github.blir;
+package com.github.blir.file;
 
+import com.github.blir.Location;
 import java.io.*;
 import java.util.Set;
 

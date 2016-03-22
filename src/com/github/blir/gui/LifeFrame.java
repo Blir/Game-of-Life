@@ -1,9 +1,17 @@
-package com.github.blir;
+package com.github.blir.gui;
 
+import com.github.blir.Direction;
+import com.github.blir.Life;
+import com.github.blir.Location;
+import com.github.blir.file.DesignReader;
+import com.github.blir.file.Design;
+import com.github.blir.file.DesignWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -112,6 +120,10 @@ public class LifeFrame extends javax.swing.JFrame {
     public boolean showColorGuides() {
         return jCheckBoxMenuItem2.getState();
     }
+    
+    public boolean showGroups() {
+        return jCheckBoxMenuItem7.getState();
+    }
 
     public LifePanel getLifePanel() {
         return lifePanel1;
@@ -119,6 +131,11 @@ public class LifeFrame extends javax.swing.JFrame {
 
     public Set<Location> getClipboard() {
         return clipboard;
+    }
+    
+    public void setClipboard(Stream<Location> clipboard) {
+        this.clipboard.clear();
+        clipboard.collect(Collectors.toCollection(() -> this.clipboard));
     }
 
     /**
@@ -130,7 +147,7 @@ public class LifeFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lifePanel1 = new com.github.blir.LifePanel();
+        lifePanel1 = new com.github.blir.gui.LifePanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
@@ -140,7 +157,6 @@ public class LifeFrame extends javax.swing.JFrame {
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem4 = new javax.swing.JMenuItem();
-        jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem12 = new javax.swing.JMenuItem();
@@ -148,10 +164,18 @@ public class LifeFrame extends javax.swing.JFrame {
         jMenuItem9 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
+        jMenuItem14 = new javax.swing.JMenuItem();
+        jMenuItem15 = new javax.swing.JMenuItem();
+        jMenuItem16 = new javax.swing.JMenuItem();
+        jMenuItem17 = new javax.swing.JMenuItem();
         jMenu4 = new javax.swing.JMenu();
         jCheckBoxMenuItem2 = new javax.swing.JCheckBoxMenuItem();
+        jCheckBoxMenuItem7 = new javax.swing.JCheckBoxMenuItem();
         jCheckBoxMenuItem3 = new javax.swing.JCheckBoxMenuItem();
+        jMenuItem18 = new javax.swing.JMenuItem();
         jMenu5 = new javax.swing.JMenu();
+        jMenuItem13 = new javax.swing.JMenuItem();
+        jMenuItem5 = new javax.swing.JMenuItem();
         jCheckBoxMenuItem6 = new javax.swing.JCheckBoxMenuItem();
         jCheckBoxMenuItem4 = new javax.swing.JCheckBoxMenuItem();
         jCheckBoxMenuItem5 = new javax.swing.JCheckBoxMenuItem();
@@ -162,11 +186,11 @@ public class LifeFrame extends javax.swing.JFrame {
         lifePanel1.setLayout(lifePanel1Layout);
         lifePanel1Layout.setHorizontalGroup(
             lifePanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 380, Short.MAX_VALUE)
+            .addGap(0, 382, Short.MAX_VALUE)
         );
         lifePanel1Layout.setVerticalGroup(
             lifePanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 257, Short.MAX_VALUE)
+            .addGap(0, 259, Short.MAX_VALUE)
         );
 
         jMenu1.setText("File");
@@ -225,15 +249,6 @@ public class LifeFrame extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem4);
-
-        jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
-        jMenuItem5.setText("Paste");
-        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                onPaste(evt);
-            }
-        });
-        jMenu2.add(jMenuItem5);
 
         jMenuItem7.setText("Interrupt");
         jMenuItem7.addActionListener(new java.awt.event.ActionListener() {
@@ -295,6 +310,46 @@ public class LifeFrame extends javax.swing.JFrame {
         });
         jMenu3.add(jMenuItem11);
 
+        jMenuItem14.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_UP, 0));
+        jMenuItem14.setText("Up");
+        jMenuItem14.setActionCommand("UP");
+        jMenuItem14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onDirection(evt);
+            }
+        });
+        jMenu3.add(jMenuItem14);
+
+        jMenuItem15.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_RIGHT, 0));
+        jMenuItem15.setText("Right");
+        jMenuItem15.setActionCommand("RIGHT");
+        jMenuItem15.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onDirection(evt);
+            }
+        });
+        jMenu3.add(jMenuItem15);
+
+        jMenuItem16.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DOWN, 0));
+        jMenuItem16.setText("Down");
+        jMenuItem16.setActionCommand("DOWN");
+        jMenuItem16.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onDirection(evt);
+            }
+        });
+        jMenu3.add(jMenuItem16);
+
+        jMenuItem17.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_LEFT, 0));
+        jMenuItem17.setText("Left");
+        jMenuItem17.setActionCommand("LEFT");
+        jMenuItem17.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onDirection(evt);
+            }
+        });
+        jMenu3.add(jMenuItem17);
+
         jMenuBar1.add(jMenu3);
 
         jMenu4.setText("Display");
@@ -303,13 +358,43 @@ public class LifeFrame extends javax.swing.JFrame {
         jCheckBoxMenuItem2.setText("Show Color Guides");
         jMenu4.add(jCheckBoxMenuItem2);
 
+        jCheckBoxMenuItem7.setSelected(true);
+        jCheckBoxMenuItem7.setText("Show Groups");
+        jMenu4.add(jCheckBoxMenuItem7);
+
         jCheckBoxMenuItem3.setSelected(true);
         jCheckBoxMenuItem3.setText("Toggle Render");
         jMenu4.add(jCheckBoxMenuItem3);
 
+        jMenuItem18.setText("Reset Zoom");
+        jMenuItem18.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onResetZoom(evt);
+            }
+        });
+        jMenu4.add(jMenuItem18);
+
         jMenuBar1.add(jMenu4);
 
         jMenu5.setText("Misc");
+
+        jMenuItem13.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem13.setText("Copy");
+        jMenuItem13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onCopy(evt);
+            }
+        });
+        jMenu5.add(jMenuItem13);
+
+        jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem5.setText("Paste");
+        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onPaste(evt);
+            }
+        });
+        jMenu5.add(jMenuItem5);
 
         jCheckBoxMenuItem6.setText("Ensure Responsiveness");
         jCheckBoxMenuItem6.setEnabled(false);
@@ -320,6 +405,7 @@ public class LifeFrame extends javax.swing.JFrame {
         jMenu5.add(jCheckBoxMenuItem4);
 
         jCheckBoxMenuItem5.setText("Use Cache");
+        jCheckBoxMenuItem5.setEnabled(false);
         jMenu5.add(jCheckBoxMenuItem5);
 
         jMenuBar1.add(jMenu5);
@@ -399,6 +485,36 @@ public class LifeFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_onGoto
 
+    private void onCopy(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onCopy
+        life.listener.copy();
+    }//GEN-LAST:event_onCopy
+
+    private void onDirection(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onDirection
+        
+        LifePanel panel = life.frame.getLifePanel();
+        int shamt = panel.objectSize > 0
+                ? (panel.getWidth() / panel.objectSize) / 8
+                : (panel.getWidth() * (2 - panel.objectSize) / 8);
+        switch (evt.getActionCommand()) {
+            case "UP":
+                panel.camY -= shamt;
+                break;
+            case "LEFT":
+                panel.camX -= shamt;
+                break;
+            case "RIGHT":
+                panel.camX += shamt;
+                break;
+            case "DOWN":
+                panel.camY += shamt;
+                break;
+        }
+    }//GEN-LAST:event_onDirection
+
+    private void onResetZoom(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onResetZoom
+        lifePanel1.objectSize = 10;
+    }//GEN-LAST:event_onResetZoom
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem2;
@@ -406,6 +522,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem4;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem5;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem6;
+    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
@@ -416,6 +533,12 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem12;
+    private javax.swing.JMenuItem jMenuItem13;
+    private javax.swing.JMenuItem jMenuItem14;
+    private javax.swing.JMenuItem jMenuItem15;
+    private javax.swing.JMenuItem jMenuItem16;
+    private javax.swing.JMenuItem jMenuItem17;
+    private javax.swing.JMenuItem jMenuItem18;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -424,6 +547,6 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JMenuItem jMenuItem9;
-    private com.github.blir.LifePanel lifePanel1;
+    private com.github.blir.gui.LifePanel lifePanel1;
     // End of variables declaration//GEN-END:variables
 }

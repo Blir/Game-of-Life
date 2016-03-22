@@ -33,12 +33,12 @@ public final class Location {
         }
         return false;
     }
-    
+
     @Override
     public String toString() {
         return String.format("(%d,%d)", x, y);
     }
-    
+
     public boolean isNextTo(Location other) {
         return Math.abs(this.x - other.x) == 1 || Math.abs(this.y - other.y) == 1;
     }

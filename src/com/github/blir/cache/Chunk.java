@@ -1,5 +1,7 @@
-package com.github.blir;
+package com.github.blir.cache;
 
+import com.github.blir.gui.LifeDebug;
+import com.github.blir.Location;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,7 +62,7 @@ public class Chunk {
         }
         if (sum.size() != local.size()) {
             String err = String.format("Chunk[0x%s,%s,%s] contains erroneous location data!", Integer.toHexString(h), chunkLocation, local);
-            throw new RuntimeException(err);
+            throw new IllegalStateException(err);
         }
         return h;
     }

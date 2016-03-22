@@ -1,6 +1,7 @@
 package com.github.blir;
 
 import static com.github.blir.Life.life;
+import java.awt.Color;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,7 +18,7 @@ public class Tester {
         life.init();
         life.start();
         
-        System.out.println(life.listener.screenLocationFor(life.listener.parseLocation(50, 50)));
+        //System.out.println(life.listener.screenLocationFor(life.listener.parseLocation(50, 50)));
     }
     
     public static void chunkTest() {
