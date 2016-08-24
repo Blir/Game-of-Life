@@ -87,7 +87,9 @@ public class LifeFrame extends javax.swing.JFrame {
 
     public void save(File file) {
         try {
-            new DesignWriter(file).write(Design.make(life.world, lifePanel1.camX, lifePanel1.camY));
+            synchronized (life.WORLD_MUTEX) {
+                new DesignWriter(file).write(Design.make(life.getWorld(), lifePanel1.camX, lifePanel1.camY));
+            }
         } catch (IOException ex) {
             System.out.println(ex);
         }
@@ -99,18 +101,6 @@ public class LifeFrame extends javax.swing.JFrame {
 
     public boolean doRender() {
         return jCheckBoxMenuItem3.getState();
-    }
-
-    public boolean doDebug() {
-        return jCheckBoxMenuItem4.getState();
-    }
-
-    public boolean useCache() {
-        return jCheckBoxMenuItem5.getState();
-    }
-    
-    public boolean ensureResponsiveness() {
-        return jCheckBoxMenuItem6.getState();
     }
 
     public void setState(boolean state) {
@@ -176,9 +166,6 @@ public class LifeFrame extends javax.swing.JFrame {
         jMenu5 = new javax.swing.JMenu();
         jMenuItem13 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
-        jCheckBoxMenuItem6 = new javax.swing.JCheckBoxMenuItem();
-        jCheckBoxMenuItem4 = new javax.swing.JCheckBoxMenuItem();
-        jCheckBoxMenuItem5 = new javax.swing.JCheckBoxMenuItem();
 
         setDefaultCloseOperation(defaultCloseOp);
 
@@ -396,18 +383,6 @@ public class LifeFrame extends javax.swing.JFrame {
         });
         jMenu5.add(jMenuItem5);
 
-        jCheckBoxMenuItem6.setText("Ensure Responsiveness");
-        jCheckBoxMenuItem6.setEnabled(false);
-        jMenu5.add(jCheckBoxMenuItem6);
-
-        jCheckBoxMenuItem4.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_D, java.awt.event.InputEvent.CTRL_MASK));
-        jCheckBoxMenuItem4.setText("Debug");
-        jMenu5.add(jCheckBoxMenuItem4);
-
-        jCheckBoxMenuItem5.setText("Use Cache");
-        jCheckBoxMenuItem5.setEnabled(false);
-        jMenu5.add(jCheckBoxMenuItem5);
-
         jMenuBar1.add(jMenu5);
 
         setJMenuBar(jMenuBar1);
@@ -452,7 +427,7 @@ public class LifeFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_onLoad
 
     private void onClear(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onClear
-        life.world.clear();
+        life.clearWorld();
     }//GEN-LAST:event_onClear
 
     private void onPaste(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onPaste
@@ -519,9 +494,6 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem2;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem3;
-    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem4;
-    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem5;
-    private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem6;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;

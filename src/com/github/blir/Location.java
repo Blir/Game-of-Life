@@ -5,7 +5,7 @@ package com.github.blir;
  * @author Blir
  */
 public final class Location {
-
+    
     public final int x;
     public final int y;
 
@@ -14,7 +14,9 @@ public final class Location {
     public Location(int x, int y) {
         this.x = x;
         this.y = y;
-        hash = x ^ y;
+        int result = x;
+        result = 31 * result + y;
+        hash =  result;
     }
 
     @Override

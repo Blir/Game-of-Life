@@ -1,12 +1,5 @@
 package com.github.blir;
 
-import static com.github.blir.Life.life;
-import java.awt.Color;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  *
  * @author Blir
@@ -14,11 +7,7 @@ import java.util.Set;
 public class Tester {
 
     public static void main(String[] args) {
-        life = new Life();
-        life.init();
-        life.start();
-        
-        //System.out.println(life.listener.screenLocationFor(life.listener.parseLocation(50, 50)));
+        populateTest();
     }
     
     public static void chunkTest() {
@@ -51,5 +40,26 @@ public class Tester {
         end = System.currentTimeMillis();
 
         System.out.println(end - start);
+    }
+    
+    public static void populateTest() {
+        int loop = 0;
+        int loops = 30000;
+        Life life = new Life();
+        life.init();
+
+        long start, end;
+
+        start = System.currentTimeMillis();
+
+        for (; loop < loops; loop++) {
+            life.populate(new Neighbor(new Location(loop, loop), true));
+        }
+
+        end = System.currentTimeMillis();
+
+        System.out.println(end - start);
+        
+        System.exit(0);
     }
 }

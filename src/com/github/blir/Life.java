@@ -3,17 +3,13 @@ package com.github.blir;
 import com.github.blir.gui.LifeFrame;
 import com.github.blir.gui.LifeListener;
 import com.github.blir.gui.LifePanel;
-import com.github.blir.cache.Cache;
-import com.github.blir.cache.GroupManager;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 /**
  *
  * @author Blir
  */
-public class Life implements Runnable, LifeSource {
+public class Life implements Runnable {
 
     public static final String CONWAY = "Conway's Game of Life";
     public static Life life;
@@ -39,6 +35,20 @@ public class Life implements Runnable, LifeSource {
         neighbors.add(new Location(loc.x - 1, loc.y + 1));
         return neighbors;
     }
+    
+    public List<Neighbor> neighbors3(Location loc) {
+        Location l;
+        neighbors.add(new Neighbor(l = new Location(loc.x + 1, loc.y), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x, loc.y + 1), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x + 1, loc.y + 1), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x - 1, loc.y), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x, loc.y - 1), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x - 1, loc.y - 1), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x + 1, loc.y - 1), world.contains(l)));
+        neighbors.add(new Neighbor(l = new Location(loc.x - 1, loc.y + 1), world.contains(l)));
+        return neighbors;
+    }
+
 
     public static Set<Location> neighbors2(Location loc) {
         Set<Location> neighbors = new HashSet<>();
@@ -66,10 +76,8 @@ public class Life implements Runnable, LifeSource {
     public final Object CHUNK_MUTEX = new Object(); // chunk size
 
     public final LifeFrame frame = new LifeFrame(javax.swing.JFrame.EXIT_ON_CLOSE);
-    public final Set<Location> world = new HashSet<>();
-    public final GroupManager groupManager = new GroupManager();
+    private final Set<Location> world = new HashSet<>();
     public final LifeListener listener = new LifeListener();
-    public final Cache cache = new Cache(10, 5);
 
     public int delayMillis = 150;
     public long runtime;
@@ -81,10 +89,10 @@ public class Life implements Runnable, LifeSource {
 
     private long millis;
 
-    private final Set<Location> next = new HashSet<>();
-    private final GroupManager nextCache2 = new GroupManager();
-    private final Map<Location, Integer> aliveNeighbors = new ConcurrentHashMap<>(); // for rules 1,2,3
-    private final Map<Location, Integer> deadNeighbors = new ConcurrentHashMap<>(); // for rule 4
+    private final List<Location> next = new ArrayList<>();
+    private List<Neighbor> neighbors = new ArrayList<>();
+    private final Map<Location, Counter> aliveNeighbors = new HashMap<>(); // for rules 1,2,3
+    private final Map<Location, Counter> deadNeighbors = new HashMap<>(); // for rule 4
 
     private Thread titleUpdateThread;
     private Thread repaintThread;
@@ -94,22 +102,21 @@ public class Life implements Runnable, LifeSource {
         listener.setLife(this);
         frame.init(this);
         frame.getLifePanel().init(this);
-        cache.setLife(this);
     }
 
     public void start() {
         frame.setVisible(true);
-        (titleUpdateThread = new Thread(new TitleUpdateTask())).start();
-        (repaintThread = new Thread(new RepaintTask())).start();
+        (titleUpdateThread = new Thread(new TitleUpdateTask(), "TitleUpdate")).start();
+        (repaintThread = new Thread(new RepaintTask(), "Repaint")).start();
     }
 
     public void restart() {
-        (lifeThread = new Thread(this)).start();
+        (lifeThread = new Thread(this, "Life")).start();
         if (!titleUpdateThread.isAlive()) {
-            (titleUpdateThread = new Thread(new TitleUpdateTask())).start();
+            (titleUpdateThread = new Thread(new TitleUpdateTask(), "TitleUpdate")).start();
         }
         if (!repaintThread.isAlive()) {
-            (repaintThread = new Thread(new RepaintTask())).start();
+            (repaintThread = new Thread(new RepaintTask(), "Repaint")).start();
         }
     }
 
@@ -134,56 +141,49 @@ public class Life implements Runnable, LifeSource {
             frame.getClipboard().stream().forEach(loc -> world.add(new Location(panel.camX + loc.x, panel.camY + loc.y)));
         }
     }
-
-    void group() {
-        groupManager.clear();
-        synchronized (WORLD_MUTEX) {
-            world.stream().forEach(loc -> {
-                groupManager.groupFor(loc, world);
-            });
+    
+    public void clearWorld() {
+        synchronized (life.WORLD_MUTEX) {
+            world.clear();
+            gen = 0;
         }
+        neighbors = new ArrayList<>();
     }
     
-    void populate(Location loc) {
-        if (world.contains(loc)) {
-            aliveNeighbors.put(loc, aliveNeighbors.getOrDefault(loc, 0) + 1);
-        } else {
-            deadNeighbors.put(loc, deadNeighbors.getOrDefault(loc, 0) + 1);
-        }
-    }
-
     void populate(Neighbor neighbor) {
         Location loc = neighbor.getLocation();
-        if (neighbor.isAlive()) {
-            aliveNeighbors.put(loc, aliveNeighbors.getOrDefault(loc, 0) + 1);
-        } else {
-            deadNeighbors.put(loc, deadNeighbors.getOrDefault(loc, 0) + 1);
+        Map<Location, Counter> neighbors = (neighbor.isAlive() ? aliveNeighbors : deadNeighbors);
+        Counter counter;
+        synchronized (neighbors) {
+            counter = neighbors.get(loc);
+            if (counter == null) {
+                neighbors.put(loc, counter = new Counter());
+            }
         }
+        counter.increment();
     }
-
+    
     void populate() {
-        // should be O(8n)
-        List<Stream<Neighbor>> neighborStreams;
+        neighbors.clear();
+        
         synchronized (WORLD_MUTEX) {
-            neighborStreams = new ArrayList<>(3 * world.size());
-            world.stream().map(Life::neighbors1).forEach(neighborLocs -> {
-                neighborStreams.add(neighborLocs.stream().map(loc -> {
-                    return new Neighbor(loc, world.contains(loc));
-                }));
-            });
+            world.stream().forEach(loc -> this.neighbors3(loc));
         }
-        neighborStreams.stream().forEach(neighbors -> {
-            neighbors.parallel().forEach(this::populate);
-        });
+        neighbors.stream()
+                .parallel()
+                .forEach(this::populate);
     }
 
     void applyRules() {
         deadNeighbors.entrySet().stream()
-                .filter(entry -> entry.getValue() == 3)
+                .filter(entry -> entry.getValue().count() == 3)
                 .forEach(entry -> next.add(entry.getKey()));
 
         aliveNeighbors.entrySet().stream()
-                .filter(entry -> entry.getValue() == 2 || entry.getValue() == 3)
+                .filter(entry -> {
+                    int count = entry.getValue().count();
+                    return count == 2 || count == 3;
+                })
                 .forEach(entry -> next.add(entry.getKey()));
     }
 
@@ -194,7 +194,7 @@ public class Life implements Runnable, LifeSource {
         }
     }
 
-    void clear() {
+    void clearState() {
         next.clear();
         aliveNeighbors.clear();
         deadNeighbors.clear();
@@ -204,7 +204,7 @@ public class Life implements Runnable, LifeSource {
     public void run() {
         try {
             while (frame.isRunning()) {
-                //System.out.println("Tick");
+
                 millis = System.currentTimeMillis();
 
                 if (paste) {
@@ -223,9 +223,7 @@ public class Life implements Runnable, LifeSource {
 
                 updateWorld();
 
-                clear();
-                
-                //group();
+                clearState();
 
                 synchronized (TICK_MUTEX) {
                     runtime = System.currentTimeMillis() - millis;
@@ -244,12 +242,10 @@ public class Life implements Runnable, LifeSource {
         }
     }
 
-    @Override
     public int getGridSize() {
-        return cache.chunkSize;
+        return 5;
     }
 
-    @Override
     public void addListeners(LifePanel panel) {
         panel.addFocusListener(listener);
         panel.addMouseListener(listener);
@@ -257,42 +253,34 @@ public class Life implements Runnable, LifeSource {
         panel.addMouseWheelListener(listener);
     }
 
-    @Override
     public boolean useColorGuides() {
         return frame.showColorGuides();
     }
 
-    @Override
     public Object getWorldMutex() {
         return WORLD_MUTEX;
     }
 
-    @Override
     public Object getRenderRuntimeMutex() {
         return RENDER_MUTEX;
     }
 
-    @Override
     public Object getPrepareRenderRuntimeMutex() {
         return PREPARE_RENDER_MUTEX;
     }
     
-    @Override
     public LifeListener getListener() {
         return listener;
     }
     
-    @Override
     public LifeFrame getFrame() {
         return this.frame;
     }
 
-    @Override
     public boolean worldContains(int x, int y) {
         return world.contains(new Location(x, y));
     }
 
-    @Override
     public Set<Location> getWorld() {
         return world;
     }
@@ -339,8 +327,8 @@ public class Life implements Runnable, LifeSource {
 
         @Override
         public void run() {
-            long t, d, c, pd;
-            int s, ap, dp, cs;
+            long t, d, pd;
+            int s, ap, dp;
             LifePanel panel = frame.getLifePanel();
             try {
                 for (;;) {
@@ -357,21 +345,12 @@ public class Life implements Runnable, LifeSource {
                     synchronized (WORLD_MUTEX) {
                         s = world.size();
                     }
-                    synchronized (CACHE_MUTEX) {
-                        c = cache.runtime;
-                        cs = cache.size();
-                    }
                     synchronized (POP_MUTEX) {
                         ap = alivePopSize;
                         dp = deadPopSize;
                     }
-                    if (frame.useCache()) {
-                        frame.setTitle(String.format("%s (x:%d,y:%d)(t:%3dms,p:%3dms,d:%3dms)(g:%5d)(s:%6d)(a:%4d)(d:%4d)(z:%d)(c:%d,cs:%d)",
-                                CONWAY, panel.camX, panel.camY, t, pd, d, gen, s, ap, dp, panel.objectSize, c, cs));
-                    } else {
-                        frame.setTitle(String.format("%s (x:%d,y:%d)(t:%3dms,p:%3dms,d:%3dms)(g:%5d)(s:%6d)(a:%4d)(d:%4d)(z:%d)",
-                                CONWAY, panel.camX, panel.camY, t, pd, d, gen, s, ap, dp, panel.objectSize));
-                    }
+                    frame.setTitle(String.format("%s (x:%d,y:%d)(t:%3dms,p:%3dms,d:%3dms)(g:%5d)(s:%6d)(a:%4d)(d:%4d)(z:%d)",
+                            CONWAY, panel.camX, panel.camY, t, pd, d, gen, s, ap, dp, panel.objectSize));
                     Thread.sleep(20);
                 }
             } catch (InterruptedException ex) {

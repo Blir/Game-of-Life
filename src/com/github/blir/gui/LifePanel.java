@@ -1,10 +1,18 @@
 package com.github.blir.gui;
 
-import com.github.blir.LifeSource;
+import com.github.blir.Life;
 import com.github.blir.Location;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.swing.JPanel;
 
@@ -14,6 +22,8 @@ import javax.swing.JPanel;
  */
 public class LifePanel extends JPanel {
 
+    public static final Color highlightColor = new Color(255, 255, 0, 192);
+    
     public int camX, camY, objectSize = 10;
     public long renderRuntime, prepareRenderRuntime;
 
@@ -29,11 +39,25 @@ public class LifePanel extends JPanel {
     private int cx, cy, xs, ys;
 
     private long renderMillis, prepareRenderMillis;
-    private LifeSource life;
+    private Life life;
 
-    public void init(LifeSource life) {
+    public void init(Life life) {
         this.life = life;
         life.addListeners(this);
+        this.setDropTarget(new DropTarget() {
+            @Override
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    List<File> droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    if (droppedFiles.size() > 0) {
+                        life.getFrame().open(droppedFiles.get(0));
+                    }
+                } catch (UnsupportedFlavorException | IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
     }
 
     public void prepareRender() {
@@ -46,7 +70,8 @@ public class LifePanel extends JPanel {
             }
         }
         Highlight highlight = life.getListener().getHighlight();
-        if (copy = highlight != null) {
+        copy = highlight != null;
+        if (highlight != null) {
             cx = highlight.getLoc1().x;
             cy = highlight.getLoc1().y;
             xs = highlight.getLoc2().x - cx;
@@ -75,32 +100,32 @@ public class LifePanel extends JPanel {
                 worldView[dispX][dispY] = cell;
             }
         });
-        if (life.useColorGuides() && objectSize >= 10) {
+        if (life.useColorGuides() && objectSize >= 4) {
             prepareColorGuides();
         }
     }
     
     void prepareColorGuides() {
         Pixel empty = new Pixel(Color.LIGHT_GRAY, objectSize - 1);
-            Pixel origin = new Pixel(Color.RED, objectSize - 1);
-            Pixel cam = new Pixel(Color.CYAN, objectSize - 1);
-            Pixel grid = new Pixel(Color.GRAY, objectSize - 1);
-            int x, locX, y, locY;
-            for (x = 0, locX = xOffset; x < xObjects; x++, locX++) {
-                for (y = 0, locY = yOffset; y < yObjects; y++, locY++) {
-                    if (worldView[x][y] == null) {
-                        if (locX == 0 && locY == 0) {
-                            worldView[x][y] = origin;
-                        } else if (locX == camX && locY == camY) {
-                            worldView[x][y] = cam;
-                        } else if (locX % life.getGridSize() == 0 && locY % life.getGridSize() == 0) {
-                            worldView[x][y] = grid;
-                        } else {
-                            worldView[x][y] = empty;
-                        }
+        Pixel origin = new Pixel(Color.RED, objectSize - 1);
+        Pixel cam = new Pixel(Color.CYAN, objectSize - 1);
+        Pixel grid = new Pixel(Color.GRAY, objectSize - 1);
+        int x, locX, y, locY;
+        for (x = 0, locX = xOffset; x < xObjects; x++, locX++) {
+            for (y = 0, locY = yOffset; y < yObjects; y++, locY++) {
+                if (worldView[x][y] == null) {
+                    if (locX == 0 && locY == 0) {
+                        worldView[x][y] = origin;
+                    } else if (locX == camX && locY == camY) {
+                        worldView[x][y] = cam;
+                    } else if (locX % life.getGridSize() == 0 && locY % life.getGridSize() == 0) {
+                        worldView[x][y] = grid;
+                    } else {
+                        worldView[x][y] = empty;
                     }
                 }
             }
+        }
     }
 
     void prepareRenderAggregate() {
@@ -157,7 +182,7 @@ public class LifePanel extends JPanel {
             }
         }
         if (copy) {
-            g.setColor(new Color(255, 255, 0, 192));
+            g.setColor(highlightColor);
             g.fillRect(cx, cy, xs, ys);
         }
         synchronized (life.getRenderRuntimeMutex()) {

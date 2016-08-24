@@ -61,13 +61,11 @@ public class LifeListener implements MouseListener, MouseWheelListener, MouseMot
         Location loc = parseLocation(e.getX(), e.getY());
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
-                if (life.world.contains(loc)) {
-                    synchronized (life.WORLD_MUTEX) {
-                        life.world.remove(loc);
-                    }
-                } else {
-                    synchronized (life.WORLD_MUTEX) {
-                        life.world.add(loc);
+                synchronized (life.WORLD_MUTEX) {
+                    if (life.getWorld().contains(loc)) {
+                            life.getWorld().remove(loc);
+                    } else {
+                            life.getWorld().add(loc);
                     }
                 }
                 break;
@@ -84,7 +82,9 @@ public class LifeListener implements MouseListener, MouseWheelListener, MouseMot
         if (copy) {
             copy1 = new Location(e.getX(), e.getY());
         } else {
-            clickMode = life.world.contains(parseLocation(e.getX(), e.getY()));
+            synchronized (life.WORLD_MUTEX) {
+                clickMode = life.getWorld().contains(parseLocation(e.getX(), e.getY()));
+            }
         }
     }
 
@@ -136,11 +136,11 @@ public class LifeListener implements MouseListener, MouseWheelListener, MouseMot
             if (SwingUtilities.isLeftMouseButton(e)) {
                 if (clickMode) {
                     synchronized (life.WORLD_MUTEX) {
-                        life.world.remove(loc);
+                        life.getWorld().remove(loc);
                     }
                 } else {
                     synchronized (life.WORLD_MUTEX) {
-                        life.world.add(loc);
+                        life.getWorld().add(loc);
                     }
                 }
             } else if (SwingUtilities.isRightMouseButton(e)) {
