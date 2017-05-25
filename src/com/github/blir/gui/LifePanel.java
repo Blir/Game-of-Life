@@ -134,7 +134,9 @@ public class LifePanel extends JPanel {
         yObjects = aggregateSize * getHeight();
         xOffset = camX - (xObjects >>> 1);
         yOffset = camY - (yObjects >>> 1);
-        worldView = new Pixel[getWidth()][getHeight()];
+        int width = getWidth();
+        int height = getHeight();
+        worldView = new Pixel[width][height];
         //Map<Location, Integer> aggregates = new HashMap<>();
         Set<Location> world;
         synchronized (life.getWorldMutex()) {
@@ -144,7 +146,7 @@ public class LifePanel extends JPanel {
         world.stream().forEach(loc -> {
             int dispX = (loc.x - xOffset) / aggregateSize;
             int dispY = (loc.y - yOffset) / aggregateSize;
-            if (dispX >= 0 && dispY >= 0 && dispX < getWidth() && dispY < getHeight()) {
+            if (dispX >= 0 && dispY >= 0 && dispX < width && dispY < height) {
                 worldView[dispX][dispY] = cell;
                 //Location drawLoc = new Location(dispX, dispY);
                 //aggregates.put(drawLoc, aggregates.getOrDefault(drawLoc, 0) + 1);

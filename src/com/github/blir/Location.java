@@ -9,19 +9,22 @@ public final class Location {
     public final int x;
     public final int y;
 
-    public final int hash;
+    //public final int hash;
 
     public Location(int x, int y) {
         this.x = x;
         this.y = y;
-        int result = x;
-        result = 31 * result + y;
-        hash =  result;
+        //int result = x ^ y;
+        //int result = x;
+        //result = 31 * result + y;
+        //hash = result;
     }
 
     @Override
     public int hashCode() {
-        return hash;
+        int result = x;
+        result = 31 * result + y;
+        return result;
     }
 
     @Override

@@ -150,7 +150,7 @@ public class Life implements Runnable {
         neighbors = new ArrayList<>();
     }
     
-    void populate(Neighbor neighbor) {
+    void syncPopulate(Neighbor neighbor) {
         Location loc = neighbor.getLocation();
         Map<Location, Counter> neighbors = (neighbor.isAlive() ? aliveNeighbors : deadNeighbors);
         Counter counter;
@@ -159,6 +159,17 @@ public class Life implements Runnable {
             if (counter == null) {
                 neighbors.put(loc, counter = new Counter());
             }
+        }
+        counter.syncIncrement();
+    }
+    
+    void populate(Neighbor neighbor) {
+        Location loc = neighbor.getLocation();
+        Map<Location, Counter> neighbors = (neighbor.isAlive() ? aliveNeighbors : deadNeighbors);
+        Counter counter;
+        counter = neighbors.get(loc);
+        if (counter == null) {
+            neighbors.put(loc, counter = new Counter());
         }
         counter.increment();
     }
@@ -170,7 +181,7 @@ public class Life implements Runnable {
             world.stream().forEach(loc -> this.neighbors3(loc));
         }
         neighbors.stream()
-                .parallel()
+                //.parallel()
                 .forEach(this::populate);
     }
 

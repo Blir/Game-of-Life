@@ -1,5 +1,6 @@
 package com.github.blir.gui;
 
+import com.github.blir.Counter;
 import com.github.blir.Direction;
 import com.github.blir.Life;
 import com.github.blir.Location;
@@ -8,7 +9,9 @@ import com.github.blir.file.Design;
 import com.github.blir.file.DesignWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,10 +58,36 @@ public class LifeFrame extends javax.swing.JFrame {
                 } else if (chooser.getDialogType() == JFileChooser.SAVE_DIALOG) {
                     File file = chooser.getSelectedFile();
                     if (file != null) {
+                        boolean json = chooser.getFileFilter().getDescription().equals("JSON files");
+                        String desiredExtension = json ? ".json" : ".gol";
+                        String path = file.getPath();
+                        int delim = path.lastIndexOf('.');
+                        if (delim > 0) {
+                            String actualExtension = path.substring(delim);
+                            if (!actualExtension.equals(desiredExtension)) {
+                                file = new File(path + desiredExtension);
+                            }
+                        } else {
+                            file = new File(path + desiredExtension);
+                        }
                         save(file);
                     }
                 }
             }
+        });
+        chooser.addChoosableFileFilter(new FileFilter() {
+
+            @Override
+            public boolean accept(File file) {
+                String s = file.getName().toLowerCase();
+                return file.isDirectory() || s.endsWith(".json");
+            }
+
+            @Override
+            public String getDescription() {
+                return "JSON files";
+            }
+            
         });
         chooser.setFileFilter(new FileFilter() {
 
@@ -78,7 +107,9 @@ public class LifeFrame extends javax.swing.JFrame {
     public void open(File file) {
         try {
             clipboard.clear();
-            clipboard.addAll(new DesignReader(file).read());
+            Design design = new DesignReader(file).read();
+            life.gen = design.getGeneration();
+            clipboard.addAll(design.getDesign());
             onPaste(null);
         } catch (IOException ex) {
             System.out.println(ex);
@@ -88,7 +119,8 @@ public class LifeFrame extends javax.swing.JFrame {
     public void save(File file) {
         try {
             synchronized (life.WORLD_MUTEX) {
-                new DesignWriter(file).write(Design.make(life.getWorld(), lifePanel1.camX, lifePanel1.camY));
+                Set<Location> design = Design.make(life.getWorld(), lifePanel1.camX, lifePanel1.camY);
+                new DesignWriter(file).write(new Design(design, life.gen));
             }
         } catch (IOException ex) {
             System.out.println(ex);
@@ -166,6 +198,7 @@ public class LifeFrame extends javax.swing.JFrame {
         jMenu5 = new javax.swing.JMenu();
         jMenuItem13 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jMenuItem19 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(defaultCloseOp);
 
@@ -383,6 +416,14 @@ public class LifeFrame extends javax.swing.JFrame {
         });
         jMenu5.add(jMenuItem5);
 
+        jMenuItem19.setText("Collision Analysis");
+        jMenuItem19.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onCollisionAnalysis(evt);
+            }
+        });
+        jMenu5.add(jMenuItem19);
+
         jMenuBar1.add(jMenu5);
 
         setJMenuBar(jMenuBar1);
@@ -490,6 +531,24 @@ public class LifeFrame extends javax.swing.JFrame {
         lifePanel1.objectSize = 10;
     }//GEN-LAST:event_onResetZoom
 
+    private void onCollisionAnalysis(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onCollisionAnalysis
+        Map<Integer, Counter> hashOccurrences = new HashMap<>();
+        Stream<Integer> hashCodes;
+        synchronized (life.WORLD_MUTEX) {
+            hashCodes = life.getWorld().stream().map(loc -> loc.hashCode());
+        }
+        hashCodes.forEach(hashCode -> {
+            Counter counter = hashOccurrences.get(hashCode);
+            if (counter == null) {
+                hashOccurrences.put(hashCode, counter = new Counter());
+            }
+            counter.increment();
+        });
+        int count = hashOccurrences.values().stream().filter(counter -> counter.count() > 1).collect(Collectors.summingInt(counter -> counter.count() - 1));
+        JOptionPane.showMessageDialog(this, count + " collisions.");
+        //JOptionPane.showMessageDialog(this, hashOccurrences);
+    }//GEN-LAST:event_onCollisionAnalysis
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem1;
     private javax.swing.JCheckBoxMenuItem jCheckBoxMenuItem2;
@@ -511,6 +570,7 @@ public class LifeFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem16;
     private javax.swing.JMenuItem jMenuItem17;
     private javax.swing.JMenuItem jMenuItem18;
+    private javax.swing.JMenuItem jMenuItem19;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
